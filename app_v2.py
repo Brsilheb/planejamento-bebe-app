@@ -164,7 +164,7 @@ porc_compra = (comprados / total_itens * 100) if total_itens else 0
 valor_estimado = float(df_itens.get("Custo Estimado (R$)", pd.Series(dtype=float)).sum())
 valor_realizado = float(df_itens[df_itens["Status"].isin(["Comprado", "Recebido"])]["Total (R$)"].sum())
 
-st.markdown("## 🍼 Planejamento")
+st.markdown("## 🍼 Héber e Ju")
 col_kpi1, col_kpi2, col_kpi3, col_kpi4 = st.columns(4)
 col_kpi1.metric("Itens (total)", f"{total_itens}")
 col_kpi2.metric("Itens comprados/recebidos", f"{comprados}", f"{porc_compra:.0f}%")
@@ -177,7 +177,7 @@ abas = st.tabs(["Itens", "Plano semanal (terça)", "Orçamento", "Relatórios", 
 # ITENS
 # -----------------------------
 with abas[0]:
-    st.subheader("📦 Itens do enxoval e cuidados")
+    st.subheader("📦 Itens do enxoval e cuidados do nosso bebê")
 
     col_f1, col_f2, col_f3, col_f4 = st.columns([2, 2, 2, 2])
     categorias = sorted(df_itens["Categoria"].dropna().unique().tolist())
