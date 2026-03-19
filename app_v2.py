@@ -211,6 +211,52 @@ with abas[0]:
         "Loja/Link": st.column_config.LinkColumn("Loja/Link"),
     }
 
+    # --- Padronização de tipos para o editor ---
+
+    num_cols = ["Qtd", "Preço Unitário (R$)", "Custo Estimado (R$)", "Garantia (meses)", "Total (R$)"]
+    for c in num_cols:
+        if c in df_view.columns:
+            df_view[c] = pd.to_numeric(df_view[c], errors="coerce").fillna(0.0)
+
+    # ID como inteiro positivo sequencial (só para o editor; a persistência já normaliza ao salvar)
+    if "ID" in df_view.columns:
+        df_view["ID"] = pd.to_numeric(df_view["ID"], errors="coerce").fillna(0).astype(int)
+        # evita zero
+        mask_zero = df_view["ID"] <= 0
+        if mask_zero.any():
+            df_view.loc[mask_zero, "ID"] = range(df_view["ID"].max()+1, df_view["ID"].max()+1+mask_zero.sum())
+
+    # Colunas categóricas como texto (evita tipagem “object” com NaN)
+    cat_cols = ["Prioridade", "Status", "Categoria", "Unidade", "Marca/Modelo", "Loja/Link", "Notas/Observações", "Item"]
+    for c in cat_cols:
+        if c in df_view.columns:
+            df_view[c] = df_view[c].astype(str).replace({"nan": ""}).fillna("")
+
+    # Data em formato date (ou vazio)
+    if "Data da Compra" in df_view.columns:
+        def _to_date(x):
+            if pd.isna(x) or x in ("", "nan", "NaT"):
+                return None
+            try:
+                return pd.to_datetime(x, dayfirst=True).date()
+            except Exception:
+                return None
+        df_view["Data da Compra"] = df_view["Data da Compra"].apply(_to_date)
+    
+    
+    # Link (LinkColumn espera string de URL ou vazio; vamos garantir esquema http/https quando o usuário digitar só domínio)
+    if "Loja/Link" in df_view.columns:
+        def _fix_url(s):
+            s = (s or "").strip()
+            if not s:
+                return ""
+            if s.startswith(("http://", "https://")):
+                return s
+            # Se o usuário digitou apenas "site.com/produto", prefixa http://
+            return "http://" + s
+        df_view["Loja/Link"] = df_view["Loja/Link"].apply(_fix_url)
+
+
     edited_df = st.data_editor(
         df_view,
         column_config=cfg_cols,
